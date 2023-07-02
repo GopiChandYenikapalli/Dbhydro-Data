@@ -13,7 +13,10 @@ Please Note: As the SFWMD continues to modernize our applications, DBHYDRO Insig
 
 
 ## LOONE
-Lake Operation Optimization of Nutrient Exports LOONE is a comprehensive water balance-nutrient-optimization model that comprises three coupled modules: A water balance module that simulates the water balance and operations of a reservoir, a nutrient module that simulates nutrient (phosphorus) dynamics in the water column, and an optimization engine that optimizes a reservoir’s releases into its distributaries with the objective of nutrient export minimization and/or water deficit minimization. Python 3 was chosen to develop the code because of its many high-quality libraries and a powerful community support.
+Lake Operation Optimization of Nutrient Exports LOONE is a comprehensive water balance-nutrient optimization model that comprises three coupled modules: A water balance module that simulates the water balance and operations of a reservoir, a nutrient module that simulates nutrient (phosphorus) dynamics in the water column; and an optimization engine that optimizes a reservoir’s releases into its distributaries with the objective of nutrient export minimization and/or water deficit minimization. Python 3 was chosen to develop the code because of its many high-quality libraries and powerful community support.
+
+<img width="323" alt="image" src="https://github.com/GopiChandYenikapalli/Dbhydro-Data/assets/124816585/436d0e4d-24be-4425-a806-fbf7c59efa83">
+
 
 ## Data Requirements:
 Inflow time series

@@ -1,4 +1,5 @@
-# Dbhydro-Data
+# DBHYDRO (Environmental Data)
+# Dbhydro-Database fetching using R package
 DBHYDRO is the South Florida Water Management District's corporate environmental database that stores hydrologic, meteorologic, hydrogeologic and water quality data. This database is the source of historical and up-to-date environmental data for the 16-county region covered by the District.
 
 The DBHYDRO Browser allows you to search, using one or more criteria, and to generate a summary of the data from the available period of record. You can then select data sets of interest and have the time series data dynamically displayed on your screen in tables or graphs. You can also download data to your computer for later use.

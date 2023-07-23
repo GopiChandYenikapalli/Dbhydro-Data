@@ -1,0 +1,150 @@
+# Clear the workspace
+rm(list = ls())
+library(rio)
+library(moments)
+library(dbhydroR)
+library(dplyr)
+library(corrplot)
+library(ggplot2)
+library(MASS)
+library(car)
+
+merged_data = import("merged_data_S308C_Flow_TP.csv")
+colnames(merged_data)[1] <- "Date"
+# Rename the columns
+colnames(merged_data)[colnames(merged_data) == "S308C_PHOSPHATE, TOTAL AS P_mg/L"] <- "S308C_PHOSPHATE_Ld_mg"
+colnames(merged_data)[colnames(merged_data) == "S308.DS_FLOW_cfs"] <- "S308.DS_FLOW_cfd"
+# Calculate new column
+merged_data$S308C_PHOSPHATE_Ld_mg <- merged_data$S308.DS_FLOW_cfd * merged_data$S308C_PHOSPHATE_Ld_mg* 1000
+# Check skewness
+skewness_values <- sapply(merged_data[c("S308C_PHOSPHATE_Ld_mg", "S308.DS_FLOW_cfd")], skewness)
+print(skewness_values)
+
+# Check kurtosis
+kurtosis_values <- sapply(merged_data[c("S308C_PHOSPHATE_Ld_mg", "S308.DS_FLOW_cfd")], kurtosis)
+print(kurtosis_values)
+
+# Set the plotting parameters
+par(mfrow = c(1, 2))  # To display histograms in a 1x2 grid
+
+# Histogram for S308C_PHOSPHATE_Ld_mg
+hist(merged_data$S308C_PHOSPHATE_Ld_mg, col = 'red', probability = TRUE)
+curve(dnorm(x, mean = mean(merged_data$S308C_PHOSPHATE_Ld_mg), sd = sd(merged_data$S308C_PHOSPHATE_Ld_mg)), 
+      from = min(merged_data$S308C_PHOSPHATE_Ld_mg), to = max(merged_data$S308C_PHOSPHATE_Ld_mg), 
+      col = 'black', add = TRUE, lwd = 3)
+
+
+
+# Histogram for S308.DS_FLOW_cfs
+hist(merged_data$S308.DS_FLOW_cfd, col = 'red', probability = TRUE)
+curve(dnorm(x, mean = mean(merged_data$S308.DS_FLOW_cfd), sd = sd(merged_data$S308.DS_FLOW_cfd)), 
+      from = min(merged_data$S308.DS_FLOW_cfd), to = max(merged_data$S308.DS_FLOW_cfd), 
+      col = 'black', add = TRUE, lwd = 3)
+
+par(mfrow=c(1,1))
+# Calculate the correlation matrix for the parameter columns
+correlation_matrix <- cor(merged_data[, -1])
+
+# Print the correlation matrix
+print(correlation_matrix)
+# Visualize the correlation matrix using corrplot
+corrplot(correlation_matrix, method = "color", type = "lower", tl.col = "black",addCoef.col = "red")
+# Log transformation--> As it works best for right skewed data
+merged_data[, -1] <- log(merged_data[, -1])
+merged_data <- merged_data[complete.cases(merged_data), ]
+
+# Check skewness
+skewness_values <- sapply(merged_data[c("S308C_PHOSPHATE_Ld_mg", "S308.DS_FLOW_cfd")], skewness)
+print(skewness_values)
+
+# Check kurtosis
+kurtosis_values <- sapply(merged_data[c("S308C_PHOSPHATE_Ld_mg", "S308.DS_FLOW_cfd")], kurtosis)
+print(kurtosis_values)
+
+# Create a function to plot histogram with density plot
+# Set the plotting parameters
+par(mfrow = c(1, 2))  # To display histograms in a 1x2 grid
+
+# Histogram for S308C_PHOSPHATE_Ld_mg
+hist(merged_data$S308C_PHOSPHATE_Ld_mg, col = 'red', probability = TRUE)
+curve(dnorm(x, mean = mean(merged_data$S308C_PHOSPHATE_Ld_mg), sd = sd(merged_data$S308C_PHOSPHATE_Ld_mg)), 
+      from = min(merged_data$S308C_PHOSPHATE_Ld_mg), to = max(merged_data$S308C_PHOSPHATE_Ld_mg), 
+      col = 'black', add = TRUE, lwd = 3)
+
+
+# Histogram for S308.DS_FLOW_cfs
+hist(merged_data$S308.DS_FLOW_cfd, col = 'red', probability = TRUE)
+curve(dnorm(x, mean = mean(merged_data$S308.DS_FLOW_cfd), sd = sd(merged_data$S308.DS_FLOW_cfd)), 
+      from = min(merged_data$S308.DS_FLOW_cfd), to = max(merged_data$S308.DS_FLOW_cfd), 
+      col = 'black', add = TRUE, lwd = 3)
+
+
+par(mfrow=c(1,1))
+
+# Calculate the correlation matrix for the parameter columns
+correlation_matrix <- cor(merged_data[, -1])
+
+# Print the correlation matrix
+print(correlation_matrix)
+# Visualize the correlation matrix using corrplot
+corrplot(correlation_matrix, method = "color", type = "lower", tl.col = "black",addCoef.col = "red")
+
+# Specify initial values for a and b
+initial_values <- list(a = 1, b = 1)
+
+# Fit a non-linear regression model
+model <- nls(S308C_PHOSPHATE_Ld_mg ~ a * S308.DS_FLOW_cfd^b, data = merged_data, start = initial_values)
+
+# Print the model summary
+message("Model Summary:")
+summary(model)
+
+# Extract the estimated coefficients
+a <- coef(model)["a"]
+b <- coef(model)["b"]
+
+# Print the non-linear equation
+message("Non-linear equation: S308C_PHOSPHATE_Ld_mg =", a, "* S308.DS_FLOW_cfd^", b)
+
+
+# Make predictions on the merged_data
+predictions <- fitted(model)
+
+# Create a data frame with the actual and predicted values
+plot_data <- data.frame(
+  S308.DS_FLOW_cfd = merged_data$S308.DS_FLOW_cfd,
+  Actual = merged_data$S308C_PHOSPHATE_Ld_mg,
+  Predicted = predictions
+)
+
+# Plot actual vs predicted values
+ggplot(plot_data, aes(x = S308.DS_FLOW_cfd)) +
+  geom_point(aes(y = Actual), color = "blue", size = 3) +
+  geom_point(aes(y = Predicted), color = "red", size = 3) +
+  labs(x = "S308.DS_FLOW_cfd", y = "S308C_PHOSPHATE_Ld_mg") +
+  ggtitle("Actual vs Predicted Values") +
+  theme_minimal()
+
+# Calculate the Root Mean Square Error (RMSE)
+rmse <- sqrt(mean((merged_data$S308C_PHOSPHATE_Ld_mg - predictions)^2))
+message("RMSE:", rmse)
+
+# Fit the non-linear regression model
+model <- nls(S308C_PHOSPHATE_Ld_mg ~ a * S308.DS_FLOW_cfd^b, data = merged_data, start = initial_values)
+
+# Get the predicted values from the model
+predicted <- fitted(model)
+# Calculate the total sum of squares (SST)
+mean_actual <- mean(merged_data$S308C_PHOSPHATE_Ld_mg)
+sst <- sum((merged_data$S308C_PHOSPHATE_Ld_mg - mean_actual)^2)
+
+# Calculate the residual sum of squares (SSE)
+sse <- sum((merged_data$S308C_PHOSPHATE_Ld_mg - predicted)^2)
+
+# Calculate the R-squared value
+rsquared <- 1 - (sse / sst)
+# Non-Linear equation, RMSE and R-squared:
+message("Non-linear equation: S308C_PHOSPHATE_Ld_mg =", a, "* S308.DS_FLOW_cfd^", b)
+message("RMSE:", rmse)
+message("R-squared:", rsquared)
+
